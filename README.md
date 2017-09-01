@@ -1,4 +1,3 @@
-[![Build Status](https://travis-ci.org/mertenats/Arilux_AL-LC0X.svg?branch=master)](https://travis-ci.org/mertenats/Arilux_AL-LC0X)
 
 # Alternative firmware for Arilux LED controllers
 This is an alternative firmware for Arilux LED controllers which uses [MQTT] instead of the default "Magic Home"/"Flux LED" protocol which has numerous reliability problems.
@@ -114,7 +113,7 @@ This firmware can work with MQTT in one of two ways. To cut down on firmware siz
    | `transition`  | Integer, number of seconds to transition | `5`     | If greater than `0`, light will transition from old values to new ones for the given number of seconds                                                                                   |
    | `white_value` | Integer, 0-255                           | `255`   | Controls the whiteness level of the lights. Only supported for RGBW and RGBWW. Only the first white level is set, there is no support for setting the second white level on RGBWW lights |
 
-2. Individual topics mode. The firmware will publish and subscribe to at least 11 topics and expect specifically formatted payloads for each of them. The full list is below.
+2. Individual topics mode. The firmware will publish and subscribe to at least 13 topics and expect specifically formatted payloads for each of them. The full list is below.
 
     ##### Individual topics
 
@@ -138,6 +137,13 @@ This firmware can work with MQTT in one of two ways. To cut down on firmware siz
     |------------|-----------------------------------|---------------------|
     | State      | `rgb(w/ww)/<chipid>/color/state`  | `0-255,0-255,0-255` |
     | Command    | `rgb(w/ww)/<chipid>/color/set`    | `0-255,0-255,0-255` |
+
+    ###### ColorHex
+
+    | #          | Topic                                | Payload         |
+    |------------|--------------------------------------|-----------------|
+    | State      | `rgb(w/ww)/<chipid>/colorhex/state`  | `000000-FFFFFF` |
+    | Command    | `rgb(w/ww)/<chipid>/colorhex/set`    | `000000-FFFFFF` |
 
     ###### White
 
@@ -191,6 +197,38 @@ light:
     rgb_command_topic: 'rgb(w/ww)/<chipid>/color/set'
 ```
 
+### Configuration for FHEM
+
+```
+defmod MyBroker MQTT 127.0.0.1:1883
+attr MyBroker room MQTT  
+  
+defmod ARILUX_test MQTT_DEVICE Bastel
+attr ARILUX_test IODev MyBroker
+attr ARILUX_test devStateIcon {Color::devStateIcon($name,"rgb","rgbhex","state")}
+attr ARILUX_test group Licht
+attr ARILUX_test icon light_led_stripe_rgb
+attr ARILUX_test publishSet on off rgb(w/ww)/<chipid>/state/set
+attr ARILUX_test publishSet_brightness rgb(w/ww)/<chipid>/brightness/set
+attr ARILUX_test publishSet_rgb rgb(w/ww)/<chipid>/color/set
+attr ARILUX_test publishSet_rgbhex rgb(w/ww)/<chipid>/colorhex/set
+attr ARILUX_test room MQTT
+attr ARILUX_test stateFormat state
+attr ARILUX_test subscribeReading_brightness rgb(w/ww)/<chipid>/brightness/state
+attr ARILUX_test subscribeReading_brightness-set rgb(w/ww)/<chipid>/brightness/set
+attr ARILUX_test subscribeReading_color-set rgb(w/ww)/<chipid>/color/set
+attr ARILUX_test subscribeReading_colorhex-set rgb(w/ww)/<chipid>/colorhex/set
+attr ARILUX_test subscribeReading_rgb rgb(w/ww)/<chipid>/color/state
+attr ARILUX_test subscribeReading_rgb-set rgb(w/ww)/<chipid>/color/set
+attr ARILUX_test subscribeReading_rgbhex rgb(w/ww)/<chipid>/colorhex/state
+attr ARILUX_test subscribeReading_rgbhex-set rgb(w/ww)/<chipid>/colorhex/set
+attr ARILUX_test subscribeReading_state rgb(w/ww)/<chipid>/state/state
+attr ARILUX_test subscribeReading_state-set rgb(w/ww)/<chipid>/state/set
+attr ARILUX_test subscribeReading_status rgb(w/ww)/<chipid>/status
+attr ARILUX_test webCmd rgbhex:brightness:rgbhex ff0000:rgbhex 00ff00:rgbhex 0000ff:toggle:on:off
+attr ARILUX_test widgetOverride rgbhex:colorpicker,RGB brightness:slider,5,25,255,1
+```
+
 ## Todo
 ### IR remote
 - Flash
@@ -218,6 +256,7 @@ light:
 For further information and to join the discussion for this firmware [check out this thread] on the Home Assistant Community Discussion Forum.
 
 ## Contributors
+- [@mertenats]: Did a great job, I forked the repository from him
 - [@KmanOz]: Codes for the RF remote (Arilux AL-LC09)
 - [@DanGunvald]: RGBW/RGBWW support
 - [@robbiet480]: General cleanup and merging of RGBW/RGBWW code
