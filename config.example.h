@@ -92,6 +92,8 @@
 #define MQTT_BRIGHTNESS_COMMAND_TOPIC_TEMPLATE "%s/brightness/set"
 #define MQTT_COLOR_STATE_TOPIC_TEMPLATE        "%s/color/state"
 #define MQTT_COLOR_COMMAND_TOPIC_TEMPLATE      "%s/color/set"
+#define MQTT_COLORHEX_STATE_TOPIC_TEMPLATE     "%s/colorhex/state"
+#define MQTT_COLORHEX_COMMAND_TOPIC_TEMPLATE   "%s/colorhex/set"
 
 #if defined(RGBW) || defined (RGBWW)
 #define MQTT_WHITE_STATE_TOPIC_TEMPLATE        "%s/white/state"
@@ -99,8 +101,8 @@
 #endif
 
 // MQTT payloads
-#define MQTT_STATE_ON_PAYLOAD                  "ON"
-#define MQTT_STATE_OFF_PAYLOAD                 "OFF"
+#define MQTT_STATE_ON_PAYLOAD                  "on"
+#define MQTT_STATE_OFF_PAYLOAD                 "off"
 
 #endif
 

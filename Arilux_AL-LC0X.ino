@@ -57,6 +57,8 @@ char   ARILUX_MQTT_STATUS_TOPIC[44];
   char   ARILUX_MQTT_BRIGHTNESS_COMMAND_TOPIC[44];
   char   ARILUX_MQTT_COLOR_STATE_TOPIC[44];
   char   ARILUX_MQTT_COLOR_COMMAND_TOPIC[44];
+  char   ARILUX_MQTT_COLORHEX_STATE_TOPIC[44];
+  char   ARILUX_MQTT_COLORHEX_COMMAND_TOPIC[44];
   #if defined(RGBW) || defined (RGBWW)
     char   ARILUX_MQTT_WHITE_STATE_TOPIC[44];
     char   ARILUX_MQTT_WHITE_COMMAND_TOPIC[44];
@@ -186,6 +188,8 @@ void publishToMQTT(const char* topic, const char* payload) {
   void publishColorChange(void) {
     snprintf(msgBuffer, sizeof(msgBuffer), "%d,%d,%d", arilux.getRedValue(), arilux.getGreenValue(), arilux.getBlueValue());
     publishToMQTT(ARILUX_MQTT_COLOR_STATE_TOPIC, msgBuffer);
+	snprintf(msgBuffer, sizeof(msgBuffer), "%02X%02X%02X", arilux.getRedValue(), arilux.getGreenValue(), arilux.getBlueValue());
+    publishToMQTT(ARILUX_MQTT_COLORHEX_STATE_TOPIC, msgBuffer);
   }
 
   #if defined(RGBW) || defined (RGBWW)
@@ -479,6 +483,16 @@ void callback(char* p_topic, byte* p_payload, unsigned int p_length) {
 
       if (arilux.setColor(r, g, b))
         cmd = ARILUX_CMD_COLOR_CHANGED;
+    } else if (String(ARILUX_MQTT_COLORHEX_COMMAND_TOPIC).equals(p_topic)) {
+      char charbuf[8];
+      payload.toCharArray(charbuf,8);
+      long int rgb=strtol(charbuf,0,16); //=>rgb=0x001234FE;
+      byte r=(byte)(rgb>>16);
+      byte g=(byte)(rgb>>8);
+      byte b=(byte)(rgb);
+
+      if (arilux.setColor(r, g, b))
+        cmd = ARILUX_CMD_COLOR_CHANGED;
     }
     #if defined(RGBW) || defined (RGBWW)
       if (String(ARILUX_MQTT_WHITE_COMMAND_TOPIC).equals(p_topic)) {
@@ -520,6 +534,8 @@ void connectMQTT(void) {
             root["brightness_command_topic"] = ARILUX_MQTT_BRIGHTNESS_COMMAND_TOPIC;
             root["rgb_state_topic"] = ARILUX_MQTT_COLOR_STATE_TOPIC;
             root["rgb_command_topic"] = ARILUX_MQTT_COLOR_COMMAND_TOPIC;
+            root["rgbhex_state_topic"] = ARILUX_MQTT_COLORHEX_STATE_TOPIC;
+            root["rgbhex_command_topic"] = ARILUX_MQTT_COLORHEX_COMMAND_TOPIC;
             root["payload_on"] = MQTT_STATE_ON_PAYLOAD;
             root["payload_off"] = MQTT_STATE_OFF_PAYLOAD;
           #endif
@@ -544,6 +560,7 @@ void connectMQTT(void) {
       subscribeToMQTTTopic(ARILUX_MQTT_STATE_COMMAND_TOPIC);
       subscribeToMQTTTopic(ARILUX_MQTT_BRIGHTNESS_COMMAND_TOPIC);
       subscribeToMQTTTopic(ARILUX_MQTT_COLOR_COMMAND_TOPIC);
+	  subscribeToMQTTTopic(ARILUX_MQTT_COLORHEX_COMMAND_TOPIC);
 
       #if defined(RGBW) || defined (RGBWW)
             subscribeToMQTTTopic(ARILUX_MQTT_WHITE_COMMAND_TOPIC);
@@ -792,7 +809,6 @@ void handleRFRemote(void) {
         DEBUG_PRINTLN(F("INFO: ARILUX_RF_CODE_KEY_MODE_MINUS"));
         break;
       default:
-      default:
         DEBUG_PRINT(F("ERROR: RF code not defined: "));
         DEBUG_PRINTLN_WITH_FMT(value, HEX);
         break;
@@ -936,6 +952,8 @@ void setup() {
   sprintf(ARILUX_MQTT_BRIGHTNESS_COMMAND_TOPIC, MQTT_BRIGHTNESS_COMMAND_TOPIC_TEMPLATE, MQTT_TOPIC_PREFIX);
   sprintf(ARILUX_MQTT_COLOR_STATE_TOPIC, MQTT_COLOR_STATE_TOPIC_TEMPLATE, MQTT_TOPIC_PREFIX);
   sprintf(ARILUX_MQTT_COLOR_COMMAND_TOPIC, MQTT_COLOR_COMMAND_TOPIC_TEMPLATE, MQTT_TOPIC_PREFIX);
+  sprintf(ARILUX_MQTT_COLORHEX_STATE_TOPIC, MQTT_COLORHEX_STATE_TOPIC_TEMPLATE, MQTT_TOPIC_PREFIX);
+  sprintf(ARILUX_MQTT_COLORHEX_COMMAND_TOPIC, MQTT_COLORHEX_COMMAND_TOPIC_TEMPLATE, MQTT_TOPIC_PREFIX);
 
   #if defined(RGBW) || defined (RGBWW)
     sprintf(ARILUX_MQTT_WHITE_STATE_TOPIC, MQTT_WHITE_STATE_TOPIC_TEMPLATE, MQTT_TOPIC_PREFIX);
