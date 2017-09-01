@@ -792,7 +792,9 @@ void handleRFRemote(void) {
         DEBUG_PRINTLN(F("INFO: ARILUX_RF_CODE_KEY_MODE_MINUS"));
         break;
       default:
-        DEBUG_PRINTLN(F("ERROR: RF code not defined"));
+      default:
+        DEBUG_PRINT(F("ERROR: RF code not defined: "));
+        DEBUG_PRINTLN_WITH_FMT(value, HEX);
         break;
     }
     rcSwitch.resetAvailable();
