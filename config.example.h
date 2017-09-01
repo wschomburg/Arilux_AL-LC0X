@@ -57,6 +57,15 @@
 #define WIFI_SSID                              ""
 #define WIFI_PASSWORD                          ""
 
+// Enable over the air updates.
+// #define OTA
+
+// Enable HTTP Update Server.
+// #define HTTP_UPDATE_SERVER
+// #define HTTP_UPDATE_SERVER_PATH             "/update"
+// #define HTTP_UPDATE_SERVER_USERNAME         "admin"
+// #define HTTP_UPDATE_SERVER_PASSWORD         "admin"
+
 // MQTT server settings, leave username/password blank if no authentication required
 #define MQTT_SERVER                            "m21.cloudmqtt.com"
 #define MQTT_PORT                              12345

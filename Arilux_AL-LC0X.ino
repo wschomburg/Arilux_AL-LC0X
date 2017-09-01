@@ -8,12 +8,19 @@
 #include <ESP8266WiFi.h>        // https://github.com/esp8266/Arduino
 #include <PubSubClient.h>       // https://github.com/knolleary/pubsubclient/releases/tag/v2.6
 #ifdef IR_REMOTE
-#include <IRremoteESP8266.h>  // https://github.com/markszabo/IRremoteESP8266
+  #include <IRremoteESP8266.h>  // https://github.com/markszabo/IRremoteESP8266
 #endif
 #ifdef RF_REMOTE
-#include <RCSwitch.h>         // https://github.com/sui77/rc-switch
+  #include <RCSwitch.h>         // https://github.com/sui77/rc-switch
 #endif
-#include <ArduinoOTA.h>
+#ifdef OTA
+  #include <ArduinoOTA.h>
+#endif
+#ifdef HTTP_UPDATE_SERVER
+  #include <ESP8266WebServer.h>
+  #include <ESP8266HTTPUpdateServer.h>
+  #include <ESP8266mDNS.h>
+#endif
 #if defined(HOME_ASSISTANT_MQTT_DISCOVERY) || defined (JSON)
   #include <ArduinoJson.h>
 #endif
@@ -23,6 +30,11 @@
 #ifdef DEBUG_TELNET
 WiFiServer  telnetServer(23);
 WiFiClient  telnetClient;
+#endif
+
+#ifdef HTTP_UPDATE_SERVER
+ESP8266WebServer httpServer(80);
+ESP8266HTTPUpdateServer httpUpdater;
 #endif
 
 // Macros for debugging
@@ -968,23 +980,36 @@ void setup() {
   mqttClient.setCallback(callback);
   connectMQTT();
 
-  // Set hostname and start OTA
-  ArduinoOTA.setHostname(MQTT_CLIENT_ID);
-  ArduinoOTA.onStart([]() {
-    DEBUG_PRINTLN("OTA Beginning!");
-    flashSuccess(true);
-  });
-  ArduinoOTA.onError([](ota_error_t error) {
-    DEBUG_PRINT("ArduinoOTA Error[");
-    DEBUG_PRINT(error);
-    DEBUG_PRINT("]: ");
-    if (error == OTA_AUTH_ERROR) DEBUG_PRINTLN("Auth Failed");
-    else if (error == OTA_BEGIN_ERROR) DEBUG_PRINTLN("Begin Failed");
-    else if (error == OTA_CONNECT_ERROR) DEBUG_PRINTLN("Connect Failed");
-    else if (error == OTA_RECEIVE_ERROR) DEBUG_PRINTLN("Receive Failed");
-    else if (error == OTA_END_ERROR) DEBUG_PRINTLN("End Failed");
-  });
-  ArduinoOTA.begin();
+  #ifdef OTA
+    // Set hostname and start OTA
+    ArduinoOTA.setHostname(MQTT_CLIENT_ID);
+    ArduinoOTA.onStart([]() {
+      DEBUG_PRINTLN("OTA Beginning!");
+      flashSuccess(true);
+    });
+    ArduinoOTA.onError([](ota_error_t error) {
+      DEBUG_PRINT("ArduinoOTA Error[");
+      DEBUG_PRINT(error);
+      DEBUG_PRINT("]: ");
+      if (error == OTA_AUTH_ERROR) DEBUG_PRINTLN("Auth Failed");
+      else if (error == OTA_BEGIN_ERROR) DEBUG_PRINTLN("Begin Failed");
+      else if (error == OTA_CONNECT_ERROR) DEBUG_PRINTLN("Connect Failed");
+      else if (error == OTA_RECEIVE_ERROR) DEBUG_PRINTLN("Receive Failed");
+      else if (error == OTA_END_ERROR) DEBUG_PRINTLN("End Failed");
+    });
+    ArduinoOTA.begin();
+  #endif
+
+  #ifdef HTTP_UPDATE_SERVER
+    MDNS.begin(MQTT_CLIENT_ID);
+  
+    httpUpdater.setup(&httpServer, HTTP_UPDATE_SERVER_PATH, HTTP_UPDATE_SERVER_USERNAME, HTTP_UPDATE_SERVER_PASSWORD);
+    httpServer.begin();
+  
+    MDNS.addService("http", "tcp", 80);
+    Serial.printf("HTTPUpdateServer ready! Open http://%s.lan%s in your browser and login with username '%s' and password '%s'\n", MQTT_CLIENT_ID, HTTP_UPDATE_SERVER_PATH, HTTP_UPDATE_SERVER_USERNAME, HTTP_UPDATE_SERVER_PASSWORD);
+  //  Serial.printf("To upload through terminal you can use: curl -u '%s':'%s' -F "image=@firmware.bin" http://%s.lan%s\n", HTTP_UPDATE_SERVER_USERNAME, HTTP_UPDATE_SERVER_PASSWORD, MQTT_CLIENT_ID, HTTP_UPDATE_SERVER_PATH); 
+  #endif
 }
 
 void loop() {
@@ -1011,6 +1036,12 @@ void loop() {
   // Handle commands
   handleCMD();
   yield();
-  ArduinoOTA.handle();
-  yield();
+  #ifdef OTA
+    ArduinoOTA.handle();
+    yield();
+  #endif
+  #ifdef HTTP_UPDATE_SERVER
+    httpServer.handleClient();
+    yield();
+  #endif
 }
