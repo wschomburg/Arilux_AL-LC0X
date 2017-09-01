@@ -92,6 +92,9 @@ uint8_t Arilux::setBrightness(uint8_t p_brightness) {
 
   m_brightness = p_brightness;
 
+  if (!m_state)
+    return false;
+
   analogWrite(m_redPin, map(m_color.red, 0, ARILUX_PWM_RANGE, 0, m_brightness));
   analogWrite(m_greenPin, map(m_color.green, 0, ARILUX_PWM_RANGE, 0, m_brightness));
   analogWrite(m_bluePin, map(m_color.blue, 0, ARILUX_PWM_RANGE, 0, m_brightness));
